@@ -13,7 +13,7 @@ date: 2026-11-24
 
 > **Real-World Use Case (Netflix):** Its entire streaming platform runs on AWS, enabling automatic scaling for millions of concurrent users worldwide without relying on a single server or on-premises data center.
 > 
->  **Another Real-World Use Cases :** Dropbox, Airbnb, NASA, MC donalds, 
+>  **Another Real-World Use Cases :** Dropbox, Airbnb, NASA, MC donalds, ACTIVISION, FOX are examples that uses services on the cloud.
 
 ---
 
@@ -29,8 +29,14 @@ To ensure low latency and high availability, AWS divides its physical infrastruc
    - Each AZ consists of one or more discrete data centers with redundant power, networking, and connectivity, linked together via ultra-low-latency fiber-optic networks.
    - If one AZ experiences an outage (flood, power failure), the remaining AZs in the same Region continue operating without service disruption.
 
-3. **Edge Locations (Points of Presence - PoPs):**
+3. **Data Centers:**
+
+4. **Edge Locations (Points of Presence - PoPs):**
    - Over 400 locations distributed globally to deliver cached content to end users with the lowest possible latency (used by **Amazon CloudFront**).
+
+All of the
+
+
 
 ---
 
@@ -43,3 +49,8 @@ To ensure low latency and high availability, AWS divides its physical infrastruc
 
 AWS Cloude use Cases
 	-Sophisticated, scalable applications (Diverse set of industries)
+	-Enterprise IT, Backup & Storage, Big Data Analytics
+	-Website hosting, Mobile & Social Apps
+	-Entired game servers running on the cloud
+	
+	
