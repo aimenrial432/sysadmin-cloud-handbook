@@ -41,12 +41,17 @@ date: "2026-11-24"
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "AllowEC2ReadOnly",
+      "Sid": "AllowEC2ReadOnlyWithMFA",
       "Effect": "Allow",
       "Action": [
         "ec2:Describe*"
       ],
-      "Resource": "*"
+      "Resource": "*",
+      "Condition": {
+        "Bool": {
+          "aws:MultiFactorAuthPresent": "true"
+        }
+      }
     }
   ]
 }
@@ -58,6 +63,7 @@ date: "2026-11-24"
 - **`Effect`:** Only two valid values exist: `"Allow"` or `"Deny"`.
 - **`Action`:** List of API calls allowed or denied (`service:ActionName`, supports wildcards like `*`).
 - **`Resource`:** Specific AWS resources (identified by ARN) or `"*"` for all resources.
+- **`Condition` (Optional):** Extra rule block specifying *when* the statement takes effect (`Operator` + `Condition Key` + `Value`). The policy applies **only if** the condition evaluates to true (e.g., enforcing MFA via `aws:MultiFactorAuthPresent`, restricting by `aws:SourceIp`, requiring HTTPS via `aws:SecureTransport`, or matching resource tags).
 
 > **Cross-Platform Context (AWS vs. Windows / On-Premises):**
 > This JSON policy schema (`Version`, `Statement`, `Effect`, `Action`, `Resource`) is **specific to AWS IAM** (and AWS-compatible APIs like MinIO or LocalStack). In **Windows Server / Active Directory**, permissions are not defined via JSON files—instead, access is enforced through **NTFS/Share ACLs** (Access Control Lists) and **GPOs (Group Policy Objects)**, while modern container/cloud platforms like Kubernetes use **YAML-based RBAC**.
