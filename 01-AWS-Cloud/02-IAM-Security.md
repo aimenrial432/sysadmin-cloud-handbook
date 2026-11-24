@@ -16,15 +16,19 @@ date: "2026-11-24"
 
 ## 2. Key Concepts & Architecture
 - **Root Account:** Created by default when opening an AWS account. It **should never be used or shared** for daily tasks or applications—only for initial account setup and specific account-level tasks. Create individual IAM users instead.
+- **Account Alias & Sign-in URL:**
+  - By default, IAM users sign in to the AWS Web Console via a URL containing the **12-digit Account ID** (`https://<12-digit-account-id>.signin.aws.amazon.com/console`).
+  - An **Account Alias** replaces that 12-digit ID with a globally unique, friendly name (`https://<alias>.signin.aws.amazon.com/console`).
 - **Users:** Represent specific people or applications within your organization that need access to AWS.
   - A user **does not have to belong** to any group.
   - A user **can belong to multiple groups** simultaneously (inheriting the combined permissions of all those groups).
 - **Groups:** Collections of IAM users used to assign permissions in bulk.
-  - **Key Exam Rule:** Groups **can only contain users, never other groups** (no nested groups).
+  - **Key Rule:** Groups **can only contain users, never other groups** (no nested groups).
 - **User Access Methods & Credentials:**
-  - **AWS Management Console (Web UI):** Authenticated via **Username + Password** (+ MFA). Managed via `create-login-profile`.
+  - **AWS Management Console (Web UI):** Authenticated via **Account ID/Alias + IAM Username + Password** (+ MFA). Managed via `create-login-profile`.
   - **Programmatic Access (CLI / SDK / Terraform):** Authenticated via **Access Key ID + Secret Access Key** (never meant to be memorized; automatically stored locally in `~/.aws/credentials` and `~/.aws/config`, safely outside project Git repositories).
-- **IAM Tags (`Key: Value` Metadata):** Optional key-value pairs attached to IAM users or roles (e.g., `Department: Engineering`, `Environment: Prod`) for organization, cost tracking, auditing, and **ABAC (Attribute-Based Access Control)**—allowing policies to grant dynamic access when a user's tag matches a resource's tag (`aws:PrincipalTag` vs. `aws:ResourceTag`).
+- **IAM Tags (`Key: Value` Metadata):** Optional key-value pairs attached to IAM users or roles (e.g., `Department: Engineering`, `Environment: Prod`).
+  - Used for organization, cost tracking, auditing, and **ABAC (Attribute-Based Access Control)**—granting dynamic access when a user's tag matches a resource's tag (`aws:PrincipalTag` vs. `aws:ResourceTag`).
 - **IAM Policies (JSON):** JSON documents attached to users, groups, or roles that explicitly define what actions are allowed or denied on specific AWS resources.
   - **Least Privilege Principle:** Never grant more permissions than a user strictly needs to perform their job.
 
@@ -58,7 +62,9 @@ date: "2026-11-24"
 
 ## 3. CLI Commands / LocalStack Lab
 
-> **Console vs. LocalStack Note:** Unlike the AWS Web Console wizard (which lets you tick managed policies during user creation), CLI/LocalStack workflows require creating the user/group first and explicitly attaching policies via ARN. *(Note: LocalStack Community simulates IAM state; real permission blocking requires `ENFORCE_IAM=1` in Pro).*
+> **AWS Console Dashboard vs. LocalStack Environment Note:**
+> - **Permission Assignment:** Unlike the AWS Web Console wizard (which lets you tick managed policies during user creation), CLI/LocalStack workflows require creating the user/group first and explicitly attaching policies via ARN.
+> - **Console Sign-in & Alias:** In real AWS, IAM users log in through a dedicated web login portal using their Account ID/Alias, username, and password. LocalStack does **not** render an IAM web login form—its Resource Browser (`app.localstack.cloud`) connects directly to the local API (`localhost:4566`), so identity switching is performed via CLI profiles (`--profile` or `default`) while Account Aliases are managed via CLI. *(Note: LocalStack Community simulates IAM state; real permission blocking requires `ENFORCE_IAM=1` in Pro).*
 
 ```powershell
 # 1. Create IAM Group and User, then assign membership
@@ -76,11 +82,15 @@ awslocal iam create-policy --policy-name EC2ReadOnlyCustom --policy-document fil
 awslocal iam tag-user --user-name aimenrial432 --tags Key=Department,Value=Engineering Key=Role,Value=CloudAdmin
 awslocal iam list-user-tags --user-name aimenrial432
 
-# 5. Set Console Password (Login Profile) & Generate Programmatic Access Keys
+# 5. Manage Account Alias (replaces 12-digit Account ID on AWS Console sign-in URL)
+awslocal iam create-account-alias --account-alias aimenrial-cloud-lab
+awslocal iam list-account-aliases
+
+# 6. Set Console Password (Login Profile) & Generate Programmatic Access Keys
 awslocal iam create-login-profile --user-name aimenrial432 --password "StrongPassword123!"
 awslocal iam create-access-key --user-name aimenrial432
 
-# 6. Configure AWS CLI Profiles & Switch Active Identity
+# 7. Configure AWS CLI Profiles & Switch Active Identity
 aws configure                          # Sets permanent 'default' profile (replaces root by default)
 aws configure --profile aimenrial432   # Stores credentials under a named profile in ~/.aws/credentials
 
@@ -92,7 +102,7 @@ Remove-Item Env:AWS_PROFILE            # Revert to default profile
 awslocal sts get-caller-identity
 awslocal sts get-caller-identity --profile aimenrial432
 
-# 7. Audit / Verification Commands
+# 8. Audit / Verification Commands
 awslocal iam list-users
 awslocal iam get-group --group-name admin
 awslocal iam list-attached-group-policies --group-name admin
@@ -106,17 +116,18 @@ awslocal iam list-attached-group-policies --group-name admin
   1. **Explicit Deny:** Is there any applicable `"Effect": "Deny"`? $\rightarrow$ **DENIED** (evaluation stops immediately; overrides any `Allow`).
   2. **Explicit Allow:** Is there an applicable `"Effect": "Allow"`? $\rightarrow$ **ALLOWED**.
   3. **Implicit Deny (Default):** If neither exists $\rightarrow$ **DENIED** by default (every new IAM user starts with zero permissions).
-- **Critical Exam / Architecture Points:**
+- **Critical Architecture & Exam Rules:**
   - **No Initial Deny Policy Needed:** Because of *Implicit Deny*, you do not attach a "deny all" policy when creating users—you start from zero and attach only the required `Allow` policies (*Least Privilege*), reserving `Explicit Deny` for strict guardrails/exceptions.
   - **No Nested Groups:** Groups cannot contain other groups.
+  - **Account Alias Limits:** Only **1 Account Alias** per AWS account; the alias name must be **globally unique** across all AWS accounts (lowercase letters, numbers, and hyphens only).
   - **Access Key Limits & Rotation:** Maximum **2 active Access Keys** per IAM user at any time to allow seamless key rotation. `SecretAccessKey` is shown **only once** upon creation; if lost, delete the key and generate a new one. Never commit `.env` or credential files to Git.
 
 ---
 
 ## 5. Quick Comparison (Key Differences vs. Similar Services)
-| Feature | IAM User | IAM Group | IAM Role |
-| :--- | :--- | :--- | :--- |
-| **Target Entity** | Individual person or app | Collection of IAM users | AWS services (EC2, Lambda) or federated users |
-| **Credentials** | Long-term (Password / Access Keys) | None (inherits to members) | Short-term temporary tokens (via STS) |
-| **Ideal Use Case** | Human admins / developers | Role-based team permissions (Devs, Ops) | Allowing an EC2 instance to access S3 securely |
+| Feature            | IAM User                           | IAM Group                               | IAM Role                                       |
+| :----------------- | :--------------------------------- | :-------------------------------------- | :--------------------------------------------- |
+| **Target Entity**  | Individual person or app           | Collection of IAM users                 | AWS services (EC2, Lambda) or federated users  |
+| **Credentials**    | Long-term (Password / Access Keys) | None (inherits to members)              | Short-term temporary tokens (via STS)          |
+| **Ideal Use Case** | Human admins / developers          | Role-based team permissions (Devs, Ops) | Allowing an EC2 instance to access S3 securely |
 
