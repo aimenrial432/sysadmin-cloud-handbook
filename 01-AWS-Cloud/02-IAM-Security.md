@@ -23,7 +23,8 @@ date: "2026-11-24"
   - **Key Exam Rule:** Groups **can only contain users, never other groups** (no nested groups).
 - **User Access Methods & Credentials:**
   - **AWS Management Console (Web UI):** Authenticated via **Username + Password** (+ MFA). Managed via `create-login-profile`.
-  - **Programmatic Access (CLI / SDK / Terraform):** Authenticated via **Access Key ID + Secret Access Key** (never meant to be memorized; stored in `~/.aws/credentials` profiles or environment variables).
+  - **Programmatic Access (CLI / SDK / Terraform):** Authenticated via **Access Key ID + Secret Access Key** (never meant to be memorized; automatically stored locally in `~/.aws/credentials` and `~/.aws/config`, safely outside project Git repositories).
+  -
 - **IAM Policies (JSON):** JSON documents attached to users, groups, or roles that explicitly define what actions are allowed or denied on specific AWS resources.
   - **Least Privilege Principle:** Never grant more permissions than a user strictly needs to perform their job.
 
@@ -75,9 +76,17 @@ awslocal iam create-policy --policy-name EC2ReadOnlyCustom --policy-document fil
 awslocal iam create-login-profile --user-name aimenrial432 --password "StrongPassword123!"
 awslocal iam create-access-key --user-name aimenrial432
 
-# 5. Configure a named AWS CLI profile to authenticate as that user
-aws configure --profile aimenrial432
-awslocal s3 ls --profile aimenrial432
+# 5. Configure AWS CLI Profiles & Switch Active Identity
+aws configure                          # Sets permanent 'default' profile (replaces root by default)
+aws configure --profile aimenrial432   # Stores credentials under a named profile in ~/.aws/credentials
+
+# Switch profile temporarily for current PowerShell session:
+$env:AWS_PROFILE = "aimenrial432"
+Remove-Item Env:AWS_PROFILE            # Revert to default profile
+
+# Verify active caller identity ("whoami" in AWS)
+awslocal sts get-caller-identity
+awslocal sts get-caller-identity --profile aimenrial432
 
 # 6. Audit / Verification Commands
 awslocal iam list-users
@@ -96,7 +105,7 @@ awslocal iam list-attached-group-policies --group-name admin
 - **Critical Exam / Architecture Points:**
   - **No Initial Deny Policy Needed:** Because of *Implicit Deny*, you do not attach a "deny all" policy when creating users—you start from zero and attach only the required `Allow` policies (*Least Privilege*), reserving `Explicit Deny` for strict guardrails/exceptions.
   - **No Nested Groups:** Groups cannot contain other groups.
-  - **Access Key Limits & Rotation:** Maximum **2 active Access Keys** per IAM user at any time to allow seamless key rotation. `SecretAccessKey` is shown **only once** upon creation; if lost, delete the key and generate a new one.
+  - **Access Key Limits & Rotation:** Maximum **2 active Access Keys** per IAM user at any time to allow seamless key rotation. `SecretAccessKey` is shown **only once** upon creation; if lost, delete the key and generate a new one. Never commit `.env` or credential files to Git.
 
 ---
 
@@ -107,3 +116,5 @@ awslocal iam list-attached-group-policies --group-name admin
 | **Credentials** | Long-term (Password / Access Keys) | None (inherits to members) | Short-term temporary tokens (via STS) |
 | **Ideal Use Case** | Human admins / developers | Role-based team permissions (Devs, Ops) | Allowing an EC2 instance to access S3 securely |
 
+
+Tags: Son utiles en muchos recursos para darle nombre, como por ejemplo indicar que un usuario pertenece a la tag ingenieria 
