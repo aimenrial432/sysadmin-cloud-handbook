@@ -20,3 +20,16 @@ date: "{{date}}"
 ```bash
 # Example creation / query commands using awslocal
 awslocal ...
+```
+
+## 4. Security, IAM & Key Exam Limits
+- **Required Permissions:** 
+- **Critical Exam / Architecture Points:** 
+  - 
+
+## 5. Quick Comparison (Key Differences vs. Similar Services)
+| Feature | {{title}} | Alternative |
+| :--- | :--- | :--- |
+| Latency / Performance | | |
+| Persistence / Durability | | |
+| Ideal Use Case | | |
