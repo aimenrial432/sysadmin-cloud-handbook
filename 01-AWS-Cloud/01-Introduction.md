@@ -56,3 +56,9 @@ To ensure low latency and high availability, AWS organizes its physical infrastr
 - **Gaming:** Entire multiplayer game servers and matchmaking backends running globally in the cloud.
 	
 
+
+
+Note: They are somo services like Route53 that no need a especific region, so sometimes on a dashboard you will see it like (global). 
+Another services like EC requieres a especific location so it put the specific location instead os global.
+
+Note: En la pagina del mapa de los recursos de AWS tambien se pueden ver que servicios estan activos por region y te permite consultar si un servicio especifico esta disponible en la region deseada.
