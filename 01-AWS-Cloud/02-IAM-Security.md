@@ -42,7 +42,7 @@ date: "2026-11-24"
 ```
 - **`Version`:** Policy language version (always `"2012-10-17"` in current AWS policies).
 - **`Statement`:** One or more individual permission blocks.
-- **`Sid` (Optional):** Statement ID (human-readable label).
+- **`Sid` (Optional):** Statement ID — a unique alphanumeric identifier within the same policy document used to label each individual statement.
 - **`Effect`:** Only two valid values exist: `"Allow"` or `"Deny"`.
 - **`Action`:** List of API calls allowed or denied (`service:ActionName`, supports wildcards like `*`).
 - **`Resource`:** Specific AWS resources (identified by ARN) or `"*"` for all resources.
@@ -62,17 +62,20 @@ awslocal iam list-users
 
 ## 4. Security, IAM & Key Exam Limits
 - **Required Permissions:** `iam:*` (Administrator) or granular `iam:CreateUser`, `iam:AttachGroupPolicy`, etc.
+- **Policy Evaluation Logic (Strict Order):**
+  1. **Explicit Deny:** Is there any applicable `"Effect": "Deny"`? $\rightarrow$ **DENIED** (evaluation stops immediately; overrides any `Allow`).
+  2. **Explicit Allow:** Is there an applicable `"Effect": "Allow"`? $\rightarrow$ **ALLOWED**.
+  3. **Implicit Deny (Default):** If neither exists $\rightarrow$ **DENIED** by default (every new IAM user starts with zero permissions).
 - **Critical Exam / Architecture Points:**
-  - **Implicit Deny by Default:** Every new IAM user starts with zero permissions until explicitly granted via a policy.
-  - **Explicit Deny Always Wins:** If a user inherits an `"Allow"` from one group and an `"Deny"` from another, AWS always denies the action.
+  - **No Initial Deny Policy Needed:** Because of *Implicit Deny*, you do not attach a "deny all" policy when creating users—you start from zero and attach only the required `Allow` policies (*Least Privilege*), reserving `Explicit Deny` for strict guardrails/exceptions.
   - **No Nested Groups:** Groups cannot contain other groups.
 
 ---
 
 ## 5. Quick Comparison (Key Differences vs. Similar Services)
-| Feature | IAM User | IAM Group | IAM Role |
-| :--- | :--- | :--- | :--- |
-| **Target Entity** | Individual person or app | Collection of IAM users | AWS services (EC2, Lambda) or federated users |
-| **Credentials** | Long-term (Password / Access Keys) | None (inherits to members) | Short-term temporary tokens (via STS) |
-| **Ideal Use Case** | Human admins / developers | Role-based team permissions (Devs, Ops) | Allowing an EC2 instance to access S3 securely |
+| Feature            | IAM User                           | IAM Group                               | IAM Role                                       |
+| :----------------- | :--------------------------------- | :-------------------------------------- | :--------------------------------------------- |
+| **Target Entity**  | Individual person or app           | Collection of IAM users                 | AWS services (EC2, Lambda) or federated users  |
+| **Credentials**    | Long-term (Password / Access Keys) | None (inherits to members)              | Short-term temporary tokens (via STS)          |
+| **Ideal Use Case** | Human admins / developers          | Role-based team permissions (Devs, Ops) | Allowing an EC2 instance to access S3 securely |
 
