@@ -21,22 +21,27 @@ To ensure low latency and high availability, AWS organizes its physical infrastr
 
 1. **Regions:**
    - Clusters of data centers located in distinct geographical areas worldwide (e.g., `us-east-1` in N. Virginia, `eu-west-1` in Ireland, `eu-south-2` in Spain).
-   - **Key Rule:** Most AWS services are **Region-scoped**, though a few are **Global** (such as **IAM**, **Route 53**, **CloudFront**, and **WAF**).
    - **How to choose a Region:** Based on compliance/data governance laws, proximity to end users (latency), available AWS services, and pricing.
+   - **Service Availability Check:** On the AWS Global Infrastructure map ([infrastructure.aws](https://infrastructure.aws)), you can inspect which services are active per Region and verify if a specific service is available in your target Region.
 
 2. **Availability Zones (AZs):**
-   - Each Region has multiple isolated AZs (minimum 3 (usual), maximum 6; e.g., `us-east-1a`, `us-east-1b`, `us-east-1c`).
-   - Each AZ consists of one or more discrete data centers with redundant power, networking, and connectivity, linked together via ultra-low-latency fiber-optic networks.
+   - Each Region has multiple isolated AZs (minimum 3 usually, maximum 6; e.g., `us-east-1a`, `us-east-1b`, `us-east-1c`).
+   - Each AZ consists of one or more discrete data centers with redundant power, networking, and connectivity.
+   - Interconnected via **high-bandwidth, ultra-low-latency** fiber-optic networking.
    - If one AZ experiences an outage (flood, power failure), the remaining AZs in the same Region continue operating without service disruption.
-   - Connected with high bandwith, ultra-low latency networking.
 
 3. **Data Centers:**
    - The physical facilities housing the actual servers, storage, and networking hardware that make up each Availability Zone.
    - Completely invisible to customers and strictly secured by AWS (biometric access, 24/7 surveillance, undisclosed locations).
 
 4. **Edge Locations (Points of Presence - PoPs):**
-   - Over 400 locations (400 + Edge locations & 10 + Regional catches) in 90+ cities across 40+ countries.
+   - Over **400+ Edge Locations** & **10+ Regional Edge Caches** across **90+ cities in 40+ countries**.
    - Distributed globally to deliver cached content to end users with the lowest possible latency (used by **Amazon CloudFront**).
+
+### Global vs. Region-Scoped Services (Console Scope)
+> **Exam & Console Tip:**
+> - **Global Services:** Some services, such as **Route 53**, **IAM**, **CloudFront**, and **WAF**, do not require a specific Region. In the AWS Management Console, the top-right Region selector displays **`Global`** instead of a specific Region code.
+> - **Region-Scoped Services:** Most services, such as **Amazon EC2**, **S3**, or **VPC**, require a specific geographic location, so the console displays your selected Region (e.g., `us-east-1`) instead of `Global`.
 
 ---
 
@@ -54,11 +59,3 @@ To ensure low latency and high availability, AWS organizes its physical infrastr
 - **Big Data Analytics:** Processing massive datasets at scale without managing physical clusters.
 - **Website Hosting, Mobile & Social Apps:** High-traffic backends with automatic elasticity.
 - **Gaming:** Entire multiplayer game servers and matchmaking backends running globally in the cloud.
-	
-
-
-
-Note: They are somo services like Route53 that no need a especific region, so sometimes on a dashboard you will see it like (global). 
-Another services like EC requieres a especific location so it put the specific location instead os global.
-
-Note: En la pagina del mapa de los recursos de AWS tambien se pueden ver que servicios estan activos por region y te permite consultar si un servicio especifico esta disponible en la region deseada.
