@@ -21,6 +21,9 @@ date: "2026-11-24"
   - A user **can belong to multiple groups** simultaneously (inheriting the combined permissions of all those groups).
 - **Groups:** Collections of IAM users used to assign permissions in bulk.
   - **Key Exam Rule:** Groups **can only contain users, never other groups** (no nested groups).
+- **User Access Methods & Credentials:**
+  - **AWS Management Console (Web UI):** Authenticated via **Username + Password** (+ MFA). Managed via `create-login-profile`.
+  - **Programmatic Access (CLI / SDK / Terraform):** Authenticated via **Access Key ID + Secret Access Key** (never meant to be memorized; stored in `~/.aws/credentials` profiles or environment variables).
 - **IAM Policies (JSON):** JSON documents attached to users, groups, or roles that explicitly define what actions are allowed or denied on specific AWS resources.
   - **Least Privilege Principle:** Never grant more permissions than a user strictly needs to perform their job.
 
@@ -53,9 +56,33 @@ date: "2026-11-24"
 ---
 
 ## 3. CLI Commands / LocalStack Lab
-```bash
-# Example creation / query commands using awslocal
+
+> **Console vs. LocalStack Note:** Unlike the AWS Web Console wizard (which lets you tick managed policies during user creation), CLI/LocalStack workflows require creating the user/group first and explicitly attaching policies via ARN. *(Note: LocalStack Community simulates IAM state; real permission blocking requires `ENFORCE_IAM=1` in Pro).*
+
+```powershell
+# 1. Create IAM Group and User, then assign membership
+awslocal iam create-group --group-name admin
+awslocal iam create-user --user-name aimenrial432
+awslocal iam add-user-to-group --user-name aimenrial432 --group-name admin
+
+# 2. Attach an AWS Managed Policy (AdministratorAccess) to the group
+awslocal iam attach-group-policy --group-name admin --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+
+# 3. Create a Customer Managed Policy from a local JSON file (file must exist in current directory)
+awslocal iam create-policy --policy-name EC2ReadOnlyCustom --policy-document file://policy.json
+
+# 4. Set Console Password (Login Profile) & Generate Programmatic Access Keys
+awslocal iam create-login-profile --user-name aimenrial432 --password "StrongPassword123!"
+awslocal iam create-access-key --user-name aimenrial432
+
+# 5. Configure a named AWS CLI profile to authenticate as that user
+aws configure --profile aimenrial432
+awslocal s3 ls --profile aimenrial432
+
+# 6. Audit / Verification Commands
 awslocal iam list-users
+awslocal iam get-group --group-name admin
+awslocal iam list-attached-group-policies --group-name admin
 ```
 
 ---
@@ -69,13 +96,14 @@ awslocal iam list-users
 - **Critical Exam / Architecture Points:**
   - **No Initial Deny Policy Needed:** Because of *Implicit Deny*, you do not attach a "deny all" policy when creating users—you start from zero and attach only the required `Allow` policies (*Least Privilege*), reserving `Explicit Deny` for strict guardrails/exceptions.
   - **No Nested Groups:** Groups cannot contain other groups.
+  - **Access Key Limits & Rotation:** Maximum **2 active Access Keys** per IAM user at any time to allow seamless key rotation. `SecretAccessKey` is shown **only once** upon creation; if lost, delete the key and generate a new one.
 
 ---
 
 ## 5. Quick Comparison (Key Differences vs. Similar Services)
-| Feature            | IAM User                           | IAM Group                               | IAM Role                                       |
-| :----------------- | :--------------------------------- | :-------------------------------------- | :--------------------------------------------- |
-| **Target Entity**  | Individual person or app           | Collection of IAM users                 | AWS services (EC2, Lambda) or federated users  |
-| **Credentials**    | Long-term (Password / Access Keys) | None (inherits to members)              | Short-term temporary tokens (via STS)          |
-| **Ideal Use Case** | Human admins / developers          | Role-based team permissions (Devs, Ops) | Allowing an EC2 instance to access S3 securely |
+| Feature | IAM User | IAM Group | IAM Role |
+| :--- | :--- | :--- | :--- |
+| **Target Entity** | Individual person or app | Collection of IAM users | AWS services (EC2, Lambda) or federated users |
+| **Credentials** | Long-term (Password / Access Keys) | None (inherits to members) | Short-term temporary tokens (via STS) |
+| **Ideal Use Case** | Human admins / developers | Role-based team permissions (Devs, Ops) | Allowing an EC2 instance to access S3 securely |
 
