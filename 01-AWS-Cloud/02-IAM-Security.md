@@ -27,6 +27,7 @@ date: "2026-11-24"
 - **User Access Methods & Credentials:**
   - **AWS Management Console (Web UI):** Authenticated via **Account ID/Alias + IAM Username + Password** (+ MFA). Managed via `create-login-profile`.
   - **Programmatic Access (CLI / SDK / Terraform):** Authenticated via **Access Key ID + Secret Access Key** (never meant to be memorized; automatically stored locally in `~/.aws/credentials` and `~/.aws/config`, safely outside project Git repositories).
+  - **Multi-Session Support (AWS Console):** Allows signing into up to **5 different IAM users or AWS accounts simultaneously** across tabs in the same browser without overwriting session cookies (useful for side-by-side permission testing across services like EC2 or S3).
 - **IAM Tags (`Key: Value` Metadata):** Optional key-value pairs attached to IAM users or roles (e.g., `Department: Engineering`, `Environment: Prod`).
   - Used for organization, cost tracking, auditing, and **ABAC (Attribute-Based Access Control)**—granting dynamic access when a user's tag matches a resource's tag (`aws:PrincipalTag` vs. `aws:ResourceTag`).
 - **IAM Policies (JSON):** JSON documents attached to users, groups, or roles that explicitly define what actions are allowed or denied on specific AWS resources.
@@ -108,6 +109,38 @@ awslocal iam get-group --group-name admin
 awslocal iam list-attached-group-policies --group-name admin
 ```
 
+### Mini-Lab: Least Privilege & Multi-Profile Testing (Admin vs. Read-Only)
+This lab simulates **Principle of Least Privilege** by creating a restricted `developers` group (`AmazonS3ReadOnlyAccess`) and switching between `aimenrial432` (Admin) and `dev-readonly` (Restricted) using named CLI profiles.
+
+```powershell
+# 1. Create a restricted group with S3 Read-Only permissions and assign a new user
+awslocal iam create-group --group-name developers
+awslocal iam attach-group-policy --group-name developers --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+
+awslocal iam create-user --user-name dev-readonly
+awslocal iam add-user-to-group --user-name dev-readonly --group-name developers
+
+# 2. Generate Access Keys for the restricted user and register a separate CLI profile
+awslocal iam create-access-key --user-name dev-readonly
+aws configure --profile dev-readonly
+
+# 3. Verify identity switching between Admin (default) and Restricted user
+awslocal sts get-caller-identity                         # Returns arn:aws:iam::000000000000:user/aimenrial432
+awslocal sts get-caller-identity --profile dev-readonly  # Returns arn:aws:iam::000000000000:user/dev-readonly
+
+# 4. Test S3 Actions across both identities
+awslocal s3 mb s3://lab-iam-test-bucket                            # Admin creates bucket (Allowed)
+awslocal s3 ls --profile dev-readonly                              # Read-only user lists buckets (Allowed)
+awslocal s3 mb s3://unauthorized-bucket --profile dev-readonly     # Write attempt: AccessDenied in AWS / LocalStack ENFORCE_IAM=1
+
+# 5. Cleanup test buckets
+awslocal s3 rb s3://lab-iam-test-bucket
+awslocal s3 rb s3://unauthorized-bucket
+```
+
+> **Lab Takeaway (LocalStack Community vs. Real AWS):**
+> Even when `dev-readonly` signs requests via `--profile dev-readonly`, **LocalStack Community** logs the caller identity (`user/dev-readonly`) without blocking `s3:CreateBucket`. In **real AWS** (or LocalStack Pro with `ENFORCE_IAM=1`), step 4 fails with `An error occurred (AccessDenied) when calling the CreateBucket operation: Access Denied` because `AmazonS3ReadOnlyAccess` only grants `s3:Get*` and `s3:List*`.
+
 ---
 
 ## 4. Security, IAM & Key Exam Limits
@@ -121,6 +154,7 @@ awslocal iam list-attached-group-policies --group-name admin
   - **No Nested Groups:** Groups cannot contain other groups.
   - **Account Alias Limits:** Only **1 Account Alias** per AWS account; the alias name must be **globally unique** across all AWS accounts (lowercase letters, numbers, and hyphens only).
   - **Access Key Limits & Rotation:** Maximum **2 active Access Keys** per IAM user at any time to allow seamless key rotation. `SecretAccessKey` is shown **only once** upon creation; if lost, delete the key and generate a new one. Never commit `.env` or credential files to Git.
+  - **Console Multi-Session Limit:** The AWS Management Console supports up to **5 active concurrent sessions** per browser.
 
 ---
 
