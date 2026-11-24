@@ -28,13 +28,15 @@ To ensure low latency and high availability, AWS organizes its physical infrastr
    - Each Region has multiple isolated AZs (minimum 3 (usual), maximum 6; e.g., `us-east-1a`, `us-east-1b`, `us-east-1c`).
    - Each AZ consists of one or more discrete data centers with redundant power, networking, and connectivity, linked together via ultra-low-latency fiber-optic networks.
    - If one AZ experiences an outage (flood, power failure), the remaining AZs in the same Region continue operating without service disruption.
+   - Connected with high bandwith, ultra-low latency networking.
 
 3. **Data Centers:**
    - The physical facilities housing the actual servers, storage, and networking hardware that make up each Availability Zone.
    - Completely invisible to customers and strictly secured by AWS (biometric access, 24/7 surveillance, undisclosed locations).
 
 4. **Edge Locations (Points of Presence - PoPs):**
-   - Over 400 locations distributed globally to deliver cached content to end users with the lowest possible latency (used by **Amazon CloudFront**).
+   - Over 400 locations (400 + Edge locations & 10 + Regional catches) in 90+ cities across 40+ countries.
+   - Distributed globally to deliver cached content to end users with the lowest possible latency (used by **Amazon CloudFront**).
 
 ---
 
