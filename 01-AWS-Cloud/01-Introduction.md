@@ -12,6 +12,8 @@ date: 2026-11-24
 - **Pay-as-you-go Pricing:** You only pay for the resources you consume, with no upfront investment in physical hardware (*CapEx* $\rightarrow$ *OpEx*).
 
 > **Real-World Use Case (Netflix):** Its entire streaming platform runs on AWS, enabling automatic scaling for millions of concurrent users worldwide without relying on a single server or on-premises data center.
+> 
+>  **Another Real-World Use Cases :** Dropbox, Airbnb, NASA, MC donalds, 
 
 ---
 
@@ -37,3 +39,7 @@ To ensure low latency and high availability, AWS divides its physical infrastruc
 | :--- | :--- | :--- |
 | **Security OF the Cloud** | **AWS** | Physical security of data centers, hardware, global network, virtualization, and underlying infrastructure. |
 | **Security IN the Cloud** | **Customer (You)** | IAM configuration, data encryption, firewall rules (*Security Groups*), OS patching on EC2 instances. |
+
+
+AWS Cloude use Cases
+	-Sophisticated, scalable applications (Diverse set of industries)
