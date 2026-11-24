@@ -22,6 +22,8 @@ date: "2026-11-24"
 - **Users:** Represent specific people or applications within your organization that need access to AWS.
   - A user **does not have to belong** to any group.
   - A user **can belong to multiple groups** simultaneously (inheriting the combined permissions of all those groups).
+  - **Policy Inheritance & Effective Permissions:** A user's effective permissions are the **union (cumulative sum)** of all policies attached to every group they belong to, plus any direct user policies. 
+	  - *(Note: An **Inline Policy** is a policy embedded directly into a single user, group, or role useful for one-off exceptions on users without groups, though group-based Managed Policies are preferred).*
 - **Groups:** Collections of IAM users used to assign permissions in bulk.
   - **Key Rule:** Groups **can only contain users, never other groups** (no nested groups).
 - **User Access Methods & Credentials:**
@@ -52,6 +54,7 @@ date: "2026-11-24"
 - **`Version`:** Policy language version (always `"2012-10-17"` in current AWS policies).
 - **`Statement`:** One or more individual permission blocks.
 - **`Sid` (Optional):** Statement ID — a unique alphanumeric identifier within the same policy document used to label each individual statement.
+- **`Principal` (Resource-Based Policies Only):** Specifies the account, user, role, or AWS service allowed/denied access (e.g., S3 Bucket Policies or Role Trust Policies). **Omitted** in identity-based policies (already implied by the attached user/group/role) and **cannot target an IAM Group**.
 - **`Effect`:** Only two valid values exist: `"Allow"` or `"Deny"`.
 - **`Action`:** List of API calls allowed or denied (`service:ActionName`, supports wildcards like `*`).
 - **`Resource`:** Specific AWS resources (identified by ARN) or `"*"` for all resources.
@@ -155,6 +158,7 @@ awslocal s3 rb s3://unauthorized-bucket
   - **Account Alias Limits:** Only **1 Account Alias** per AWS account; the alias name must be **globally unique** across all AWS accounts (lowercase letters, numbers, and hyphens only).
   - **Access Key Limits & Rotation:** Maximum **2 active Access Keys** per IAM user at any time to allow seamless key rotation. `SecretAccessKey` is shown **only once** upon creation; if lost, delete the key and generate a new one. Never commit `.env` or credential files to Git.
   - **Console Multi-Session Limit:** The AWS Management Console supports up to **5 active concurrent sessions** per browser.
+  - **Cross-Group Conflict Resolution:** If a user belongs to multiple groups (`dev` + `marketing`) and one group grants `Allow` while the other enforces an `Explicit Deny` on the same action, **`Explicit Deny` always wins**.
 
 ---
 
