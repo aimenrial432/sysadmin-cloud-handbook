@@ -24,7 +24,7 @@ date: "2026-11-24"
 - **User Access Methods & Credentials:**
   - **AWS Management Console (Web UI):** Authenticated via **Username + Password** (+ MFA). Managed via `create-login-profile`.
   - **Programmatic Access (CLI / SDK / Terraform):** Authenticated via **Access Key ID + Secret Access Key** (never meant to be memorized; automatically stored locally in `~/.aws/credentials` and `~/.aws/config`, safely outside project Git repositories).
-  -
+- **IAM Tags (`Key: Value` Metadata):** Optional key-value pairs attached to IAM users or roles (e.g., `Department: Engineering`, `Environment: Prod`) for organization, cost tracking, auditing, and **ABAC (Attribute-Based Access Control)**—allowing policies to grant dynamic access when a user's tag matches a resource's tag (`aws:PrincipalTag` vs. `aws:ResourceTag`).
 - **IAM Policies (JSON):** JSON documents attached to users, groups, or roles that explicitly define what actions are allowed or denied on specific AWS resources.
   - **Least Privilege Principle:** Never grant more permissions than a user strictly needs to perform their job.
 
@@ -72,11 +72,15 @@ awslocal iam attach-group-policy --group-name admin --policy-arn arn:aws:iam::aw
 # 3. Create a Customer Managed Policy from a local JSON file (file must exist in current directory)
 awslocal iam create-policy --policy-name EC2ReadOnlyCustom --policy-document file://policy.json
 
-# 4. Set Console Password (Login Profile) & Generate Programmatic Access Keys
+# 4. Add and list metadata tags on an IAM user
+awslocal iam tag-user --user-name aimenrial432 --tags Key=Department,Value=Engineering Key=Role,Value=CloudAdmin
+awslocal iam list-user-tags --user-name aimenrial432
+
+# 5. Set Console Password (Login Profile) & Generate Programmatic Access Keys
 awslocal iam create-login-profile --user-name aimenrial432 --password "StrongPassword123!"
 awslocal iam create-access-key --user-name aimenrial432
 
-# 5. Configure AWS CLI Profiles & Switch Active Identity
+# 6. Configure AWS CLI Profiles & Switch Active Identity
 aws configure                          # Sets permanent 'default' profile (replaces root by default)
 aws configure --profile aimenrial432   # Stores credentials under a named profile in ~/.aws/credentials
 
@@ -88,7 +92,7 @@ Remove-Item Env:AWS_PROFILE            # Revert to default profile
 awslocal sts get-caller-identity
 awslocal sts get-caller-identity --profile aimenrial432
 
-# 6. Audit / Verification Commands
+# 7. Audit / Verification Commands
 awslocal iam list-users
 awslocal iam get-group --group-name admin
 awslocal iam list-attached-group-policies --group-name admin
@@ -116,5 +120,3 @@ awslocal iam list-attached-group-policies --group-name admin
 | **Credentials** | Long-term (Password / Access Keys) | None (inherits to members) | Short-term temporary tokens (via STS) |
 | **Ideal Use Case** | Human admins / developers | Role-based team permissions (Devs, Ops) | Allowing an EC2 instance to access S3 securely |
 
-
-Tags: Son utiles en muchos recursos para darle nombre, como por ejemplo indicar que un usuario pertenece a la tag ingenieria 
