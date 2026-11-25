@@ -58,7 +58,10 @@ date: "2026-11-24"
 - **Two-Part Structure:**
   1. **Trust Policy (Resource-based):** Defines **who** is allowed to assume the role (`Principal`, e.g., `ec2.amazonaws.com` or `lambda.amazonaws.com`).
   2. **Permissions Policy (Identity-based):** Defines **what** actions the assumed role is authorized to perform on AWS resources.
-- **Common Service Roles:** **EC2 Instance Roles** (attached via an *Instance Profile*), **Lambda Execution Roles**, and **CloudFormation Service Roles** (Exam rule: always assign an IAM Role to EC2/Lambda instead of embedding Access Keys).
+- **Common Service Roles (Exam Focus):** Among all IAM role types (AWS Service, Cross-Account, Web Identity, SAML 2.0), **AWS Service Roles** are by far the most common in real-world architectures and the **SAA-C03 exam**—especially **EC2 Instance Roles** (attached via an *Instance Profile*), **Lambda Execution Roles**, and **CloudFormation Service Roles** (Exam rule: always assign an IAM Role to EC2/Lambda instead of embedding Access Keys).
+### E. IAM Security & Auditing Tools
+- **IAM Credentials Report (Account-Level):** Generates a downloadable **CSV report** listing **all IAM users** in the account (including Root) along with the status, creation date, and last-used/rotation timestamps of their passwords, MFA devices, and Access Keys. Ideal for account-wide compliance audits (e.g., finding unrotated keys or users without MFA).
+- **IAM Access Advisor / Last Accessed (User/Entity-Level):** Displays all AWS services granted to a specific IAM user, group, role, or policy and the **timestamp when each service was last accessed**. Used to enforce the **Principle of Least Privilege** by identifying and revoking unused permissions.
 
 ### IAM Policy JSON Structure (Sample)
 ```json
