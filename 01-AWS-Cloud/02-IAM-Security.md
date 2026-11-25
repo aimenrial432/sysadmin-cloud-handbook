@@ -207,3 +207,22 @@ awslocal s3 rb s3://unauthorized-bucket
 | **Credentials**    | Long-term (Password / Access Keys) | None (inherits to members)              | Short-term temporary tokens (via STS)          |
 | **Ideal Use Case** | Human admins / developers          | Role-based team permissions (Devs, Ops) | Allowing an EC2 instance to access S3 securely |
 
+
+Password policy:
+
+To secure users they are 2 options:
+
+	1-Define a password policy
+		-minimum password lenght
+		-rrequiere specific character types
+			-include uppercase letters
+			-lowercase letters
+			-numbers
+			-non alpha-numeric characters
+		-allow or not to a user to change their own passwords
+		-requiere to the user to change the password afetr a period of time
+		-Prevent password pre-use
+		
+	2-Multi Factor Authentication (MFA)
+		Users have access to your account and can possibly change configurations or delete resources in a AWS account (Specialy admins) 
+		Prote
