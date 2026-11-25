@@ -22,8 +22,10 @@ date: "2026-11-24"
 - **Users:** Represent specific people or applications within your organization that need access to AWS.
   - A user **does not have to belong** to any group.
   - A user **can belong to multiple groups** simultaneously (inheriting the combined permissions of all those groups).
-  - **Policy Inheritance & Effective Permissions:** A user's effective permissions are the **union (cumulative sum)** of all policies attached to every group they belong to, plus any direct user policies. 
-	  - *(Note: An **Inline Policy** is a policy embedded directly into a single user, group, or role useful for one-off exceptions on users without groups, though group-based Managed Policies are preferred).*
+  - **Policy Inheritance & Effective Permissions:** A user's effective permissions are the union (cumulative sum) of all policies attached to every group they belong to, plus any direct user policies.
+    - **AWS Managed Policies:** Pre-built, read-only policies created and maintained by AWS (e.g., `AdministratorAccess`, `IAMReadOnlyAccess`, `AmazonS3ReadOnlyAccess`).
+    - **Customer Managed Policies:** Custom standalone JSON policies created and maintained by you; reusable across multiple users, groups, or roles with version history (`v1`, `v2`, etc.).
+    - **Inline Policies:** Policies embedded directly into a single user, group, or role—strictly 1-to-1 (deleted automatically if the parent identity is deleted). Useful only for one-off exceptions; Managed Policies are preferred.
 - **Groups:** Collections of IAM users used to assign permissions in bulk.
   - **Key Rule:** Groups **can only contain users, never other groups** (no nested groups).
 - **User Access Methods & Credentials:**
@@ -61,7 +63,7 @@ date: "2026-11-24"
 - **`Sid` (Optional):** Statement ID — a unique alphanumeric identifier within the same policy document used to label each individual statement.
 - **`Principal` (Resource-Based Policies Only):** Specifies the account, user, role, or AWS service allowed/denied access (e.g., S3 Bucket Policies or Role Trust Policies). **Omitted** in identity-based policies (already implied by the attached user/group/role) and **cannot target an IAM Group**.
 - **`Effect`:** Only two valid values exist: `"Allow"` or `"Deny"`.
-- **`Action`:** List of API calls allowed or denied (`service:ActionName`, supports wildcards like `*`).
+- **`Action`:** List of API calls allowed or denied (`service:ActionName`). Supports prefix/full wildcards (`*`): e.g., `"Action": "*"` grants all AWS services/actions, while `"iam:Get*"` and `"iam:List*"` group all read/list API calls for IAM.
 - **`Resource`:** Specific AWS resources (identified by ARN) or `"*"` for all resources.
 - **`Condition` (Optional):** Extra rule block specifying *when* the statement takes effect (`Operator` + `Condition Key` + `Value`). The policy applies **only if** the condition evaluates to true (e.g., enforcing MFA via `aws:MultiFactorAuthPresent`, restricting by `aws:SourceIp`, requiring HTTPS via `aws:SecureTransport`, or matching resource tags).
 
@@ -86,7 +88,25 @@ awslocal iam add-user-to-group --user-name aimenrial432 --group-name admin
 awslocal iam attach-group-policy --group-name admin --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
 
 # 3. Create a Customer Managed Policy from a local JSON file (file must exist in current directory)
-awslocal iam create-policy --policy-name EC2ReadOnlyCustom --policy-document file://policy.json
+
+#(Reusable standalone policy: MyIAMPermissions)
+$policyJson = @'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "iam:ListUsers",
+        "iam:GetUser"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+'@
+
+awslocal iam create-policy --policy-name MyIAMPermissions --policy-document $policyJson
 
 # 4. Add and list metadata tags on an IAM user
 awslocal iam tag-user --user-name aimenrial432 --tags Key=Department,Value=Engineering Key=Role,Value=CloudAdmin
@@ -121,6 +141,11 @@ awslocal iam list-attached-group-policies --group-name admin
 awslocal iam list-policies --scope AWS --query "Policies[?contains(PolicyName, 'S3')].[PolicyName, Arn]" --output table
 awslocal iam get-policy --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
 awslocal iam get-policy-version --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess --version-id v1
+
+# 10. Inspect Direct User Policies & Cleanup Groups
+awslocal iam list-attached-user-policies --user-name aimenrial432
+awslocal iam detach-user-policy --user-name aimenrial432 --policy-arn arn:aws:iam::aws:policy/IAMReadOnlyAccess
+awslocal iam delete-group --group-name developers
 
 ```
 
