@@ -225,4 +225,22 @@ To secure users they are 2 options:
 		
 	2-Multi Factor Authentication (MFA)
 		Users have access to your account and can possibly change configurations or delete resources in a AWS account (Specialy admins) 
-		Prote
+		Protect at least root account and IAM users
+		-MFA: Password you konw + security device you own
+			-If user lose the password (Forgotten or stoled) Hacker needs the token to enter to the account
+			MFA device options:
+				-Virtual MFA device (Google authenticator, Authy)
+					Support for multiple tokkens on a single device
+				-Universal 2nd Factor (2UF) Security key (Yubikey phisical device)
+					Support for multiple root and IAM users on a single security 
+					key
+				Hardware key Fob MFA Devide
+				Hardware Key Fob MFA Device fow AWS GovBloud (US)
+					Govermental cloud
+					
+
+
+
+					
+			
+		
