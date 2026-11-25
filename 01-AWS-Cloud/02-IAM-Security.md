@@ -336,6 +336,13 @@ awslocal s3 rb s3://unauthorized-bucket
 - **Password Policy Scope & Limits:** Only **1** IAM Password Policy exists per AWS account (applies globally to all IAM users, never per group). Password reuse prevention can block up to the last **24** passwords. If a password expires before the user changes it, an IAM administrator must reset it.
 - **MFA Device Limit & Activation:** AWS supports up to **8 MFA devices** per Root or IAM user simultaneously (recommended to register a backup MFA device to prevent account lockout). Virtual TOTP setup requires entering **2 consecutive 6-digit codes** to verify time synchronization.
 - **Multi-User MFA Devices:** Both **Virtual MFA apps** (Google Authenticator/Authy) and **U2F/FIDO2 Security Keys** (YubiKey) support multiple IAM/Root accounts on a single device, whereas traditional **Hardware Key Fobs** are bound 1-to-1 per user.
+### D. IAM Security Best Practices (Exam Cheat Sheet)
+- **Lock Away the Root Account:** Never use or share the Root account for daily tasks or programmatic access; enable MFA immediately and delete any Root Access Keys.
+- **1 IAM User = 1 Physical Person:** Never share IAM credentials or Access Keys between users—create individual users and manage permissions via **IAM Groups**.
+- **Enforce Least Privilege & Strong Auth:** Grant only minimum required permissions, enforce a strong **Password Policy**, and mandate **MFA** for all human users.
+- **Prefer IAM Roles over Access Keys:** Always attach **IAM Roles** to AWS services (EC2, Lambda, CloudFormation) instead of storing static Access Keys on instances or in code.
+- **Protect Programmatic Keys:** Generate Access Keys only for CLI/SDK usage, never commit them to Git repositories, and rotate them regularly (max 2 active keys per user).
+- **Continuous Auditing:** Use **IAM Credentials Report** (account-wide credential/MFA/rotation status) and **IAM Access Advisor** (unused service permissions) to tighten security over time.
 
 ---
 
