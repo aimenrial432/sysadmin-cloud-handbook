@@ -17,11 +17,6 @@ Centralized technical knowledge base built in **Obsidian** and synced via Git ac
 | Domain / Track | Focus Areas | Status |
 | :--- | :--- | :--- |
 | **☁️ AWS Cloud (SAA-C03)** | IAM & Security, EC2, VPC Networking, S3, Databases, High Availability & Well-Architected Framework | 🚧 Working On |
-| **🐧 Linux & Systems** | Hardening (SSH/UFW/Fail2Ban), systemd, Storage/LVM, Performance & Troubleshooting | 📋 Planned |
-| **🌐 Networking (CCNA)** | Subnetting/VLSM, VLANs, Routing Protocols, ACLs, VPNs (WireGuard) | 📋 Planned |
-| **🐳 Containers & Orchestration** | Docker, Docker Compose, Kubernetes Administration (CKA), PKI & Cluster Security | 📋 Planned |
-| **🛡️ Cybersecurity & Auditing** | Enumeration, Vulnerability Assessment, Log Triage, Least Privilege & Hardening | 📋 Planned |
-
 ---
 
 ## 📐 Note-Taking Standards
