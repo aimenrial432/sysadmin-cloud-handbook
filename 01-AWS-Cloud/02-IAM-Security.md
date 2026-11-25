@@ -30,7 +30,7 @@ date: "2026-11-24"
 - **User Access Methods & Credentials (3 Ways to Access AWS):**
   - **1. AWS Management Console (Web UI):** Authenticated via **Account ID/Alias + IAM Username + Password** (+ MFA). Managed via `create-login-profile`.
   - **2. AWS CLI (Command Line Interface):** Open-source tool (built on **Boto3**, the AWS SDK for Python) providing direct access to AWS public APIs from the terminal for scripting and automation. Authenticated via **Access Keys**.
-	  - **AWS CloudShell:** Browser-based shell pre-authenticated with your console credentials; includes 1 GB persistent storage per region, not available in all regions.
+	  - **AWS CloudShell:** Free browser-based shell pre-authenticated with your console credentials (defaults to the active Console region); includes **1 GB** persistent storage per region, file upload/download, and split tabs (not available in all regions).
   - **3. AWS SDK (Software Development Kit):** Language-specific libraries (Python/Boto3, JS/Node.js, Java, Go, .NET, C++, Ruby, PHP) plus **Mobile (iOS/Android)** and **IoT Device SDKs**, embedded directly inside application source code to call AWS APIs programmatically. Authenticated via **Access Keys** (or IAM Roles).
   - **Access Keys Best Practices:** Treat `Access Key ID` $\approx$ *Username* and `Secret Access Key` $\approx$ *Password*. Never share keys with colleagues (each user generates their own); stored locally in `~/.aws/credentials` and `~/.aws/config`, safely outside Git repositories.
   - **Multi-Session Support (AWS Console):** Allows signing into up to **5 different IAM users or AWS accounts simultaneously** across tabs in the same browser without overwriting session cookies (useful for side-by-side permission testing across services like EC2 or S3).
@@ -92,6 +92,7 @@ date: "2026-11-24"
 > - **Permission Assignment:** Unlike the AWS Web Console wizard (which lets you tick managed policies during user creation), CLI/LocalStack workflows require creating the user/group first and explicitly attaching policies via ARN.
 > - **Console Sign-in & Alias:** In real AWS, IAM users log in through a dedicated web login portal using their Account ID/Alias, username, and password. LocalStack does **not** render an IAM web login form—its Resource Browser (`app.localstack.cloud`) connects directly to the local API (`localhost:4566`), so identity switching is performed via CLI profiles (`--profile` or `default`) while Account Aliases are managed via CLI. *(Note: LocalStack Community simulates IAM state; real permission blocking requires `ENFORCE_IAM=1` in Pro).*
 > - **MFA & Password Policy UI:** In the AWS Console, Password Policy is configured under *IAM -> Account settings* and Virtual MFA is paired visually by scanning a QR code during web sign-in. In LocalStack, both are managed exclusively via CLI (`update-account-password-policy` and `create-virtual-mfa-device`), and MFA prompts are not triggered because there is no web login portal.
+> - **Ephemeral In-Memory State:** LocalStack Community stores all IAM users, groups, and resources in **RAM (ephemeral)** by default. Restarting Docker or rebooting the host machine wipes the state clean (`"Users": []`), so Section 3 commands also act as a quick re-hydration script at the start of each lab session.
 
 ```powershell
 # 1. Create IAM Group and User, then assign membership
