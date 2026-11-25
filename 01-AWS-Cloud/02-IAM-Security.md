@@ -196,6 +196,7 @@ awslocal s3 rb s3://unauthorized-bucket
   - **Access Key Limits & Rotation:** Maximum **2 active Access Keys** per IAM user at any time to allow seamless key rotation. `SecretAccessKey` is shown **only once** upon creation; if lost, delete the key and generate a new one. Never commit `.env` or credential files to Git.
   - **Console Multi-Session Limit:** The AWS Management Console supports up to **5 active concurrent sessions** per browser.
   - **Cross-Group Conflict Resolution:** If a user belongs to multiple groups (`dev` + `marketing`) and one group grants `Allow` while the other enforces an `Explicit Deny` on the same action, **`Explicit Deny` always wins**.
+  - **Managed vs. Inline Policy Lifecycle:** Customer Managed Policies exist independently in IAM and can be attached to multiple identities at once (supporting rollback via policy versions), whereas Inline Policies are bound 1-to-1 to a single identity and are permanently destroyed when that identity is deleted.
 
 ---
 
