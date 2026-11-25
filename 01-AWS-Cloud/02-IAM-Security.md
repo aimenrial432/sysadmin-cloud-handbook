@@ -190,6 +190,30 @@ awslocal iam get-account-password-policy
 }
 ```
 
+
+```powershell
+# 12. Create, Bind & Manage Virtual MFA Device via CLI
+# Create the virtual MFA device and export its QR code (or Base32 seed) to a local file
+awslocal iam create-virtual-mfa-device `
+  --virtual-mfa-device-name MyPhoneMFA `
+  --outfile C:\Users\plays\qr.png `
+  --bootstrap-method QRCodePNG
+
+# Bind the virtual MFA device to an IAM user using 2 consecutive 6-digit TOTP codes
+# (LocalStack Community accepts any 2 simulated 6-digit codes, e.g., 123456 and 654321)
+awslocal iam enable-mfa-device `
+  --user-name aimenrial432 `
+  --serial-number arn:aws:iam::000000000000:mfa/MyPhoneMFA `
+  --authentication-code1 123456 `
+  --authentication-code2 654321
+
+# List active MFA devices on the user, or deactivate and delete the virtual MFA device
+awslocal iam list-mfa-devices --user-name aimenrial432
+awslocal iam deactivate-mfa-device --user-name aimenrial432 --serial-number arn:aws:iam::000000000000:mfa/MyPhoneMFA
+awslocal iam delete-virtual-mfa-device --serial-number arn:aws:iam::000000000000:mfa/MyPhoneMFA
+
+```
+
 ### Mini-Lab: Least Privilege & Multi-Profile Testing (Admin vs. Read-Only)
 This lab simulates **Principle of Least Privilege** by creating a restricted `developers` group (`AmazonS3ReadOnlyAccess`) and switching between `aimenrial432` (Admin) and `dev-readonly` (Restricted) using named CLI profiles.
 
@@ -226,20 +250,25 @@ awslocal s3 rb s3://unauthorized-bucket
 
 ## 4. Security, IAM & Key Exam Limits
 - **Required Permissions:** `iam:*` (Administrator) or granular `iam:CreateUser`, `iam:AttachGroupPolicy`, etc.
-- **Policy Evaluation Logic (Strict Order):**
-  1. **Explicit Deny:** Is there any applicable `"Effect": "Deny"`? $\rightarrow$ **DENIED** (evaluation stops immediately; overrides any `Allow`).
-  2. **Explicit Allow:** Is there an applicable `"Effect": "Allow"`? $\rightarrow$ **ALLOWED**.
-  3. **Implicit Deny (Default):** If neither exists $\rightarrow$ **DENIED** by default (every new IAM user starts with zero permissions).
-- **Critical Architecture & Exam Rules:**
-  - **No Initial Deny Policy Needed:** Because of *Implicit Deny*, you do not attach a "deny all" policy when creating users—you start from zero and attach only the required `Allow` policies (*Least Privilege*), reserving `Explicit Deny` for strict guardrails/exceptions.
-  - **No Nested Groups:** Groups cannot contain other groups.
-  - **Account Alias Limits:** Only **1 Account Alias** per AWS account; the alias name must be **globally unique** across all AWS accounts (lowercase letters, numbers, and hyphens only).
-  - **Access Key Limits & Rotation:** Maximum **2 active Access Keys** per IAM user at any time to allow seamless key rotation. `SecretAccessKey` is shown **only once** upon creation; if lost, delete the key and generate a new one. Never commit `.env` or credential files to Git.
-  - **Console Multi-Session Limit:** The AWS Management Console supports up to **5 active concurrent sessions** per browser.
-  - **Cross-Group Conflict Resolution:** If a user belongs to multiple groups (`dev` + `marketing`) and one group grants `Allow` while the other enforces an `Explicit Deny` on the same action, **`Explicit Deny` always wins**.
-  - **Managed vs. Inline Policy Lifecycle:** Customer Managed Policies exist independently in IAM and can be attached to multiple identities at once (supporting rollback via policy versions), whereas Inline Policies are bound 1-to-1 to a single identity and are permanently destroyed when that identity is deleted.
-  - **Password Policy Scope & Limits:** Only **1** IAM Password Policy exists per AWS account (applies globally to all IAM users, never per group). Password reuse prevention can block up to the last **24** passwords. If a password expires before the user changes it, an IAM administrator must reset it.
-  - **Multi-User MFA Devices:** Both **Virtual MFA apps** (Google Authenticator/Authy) and **U2F/FIDO2 Security Keys** (YubiKey) support multiple IAM/Root accounts on a single device, whereas traditional **Hardware Key Fobs** are bound 1-to-1 per user.
+
+### A. Policy Evaluation & Lifecycle
+1. **Explicit Deny:** Is there any applicable `"Effect": "Deny"`? $\rightarrow$ **DENIED** (evaluation stops immediately; overrides any `Allow`).
+2. **Explicit Allow:** Is there an applicable `"Effect": "Allow"`? $\rightarrow$ **ALLOWED**.
+3. **Implicit Deny (Default):** If neither exists $\rightarrow$ **DENIED** by default (every new IAM user starts with zero permissions).
+- **No Initial Deny Policy Needed:** Because of *Implicit Deny*, you do not attach a "deny all" policy when creating users—you start from zero and attach only the required `Allow` policies (*Least Privilege*), reserving `Explicit Deny` for strict guardrails/exceptions.
+- **Cross-Group Conflict Resolution:** If a user belongs to multiple groups (`dev` + `marketing`) and one group grants `Allow` while the other enforces an `Explicit Deny` on the same action, **`Explicit Deny` always wins**.
+- **Managed vs. Inline Policy Lifecycle:** Customer Managed Policies exist independently in IAM and can be attached to multiple identities at once (supporting rollback via policy versions), whereas Inline Policies are bound 1-to-1 to a single identity and are permanently destroyed when that identity is deleted.
+
+### B. Users, Groups & Access Keys
+- **No Nested Groups:** Groups can only contain users, never other groups.
+- **Account Alias Limits:** Only **1 Account Alias** per AWS account; the alias name must be **globally unique** across all AWS accounts (lowercase letters, numbers, and hyphens only).
+- **Access Key Limits & Rotation:** Maximum **2 active Access Keys** per IAM user at any time to allow seamless key rotation. `SecretAccessKey` is shown **only once** upon creation; if lost, delete the key and generate a new one. Never commit `.env` or credential files to Git.
+- **Console Multi-Session Limit:** The AWS Management Console supports up to **5 active concurrent sessions** per browser.
+
+### C. Password Policy & MFA
+- **Password Policy Scope & Limits:** Only **1** IAM Password Policy exists per AWS account (applies globally to all IAM users, never per group). Password reuse prevention can block up to the last **24** passwords. If a password expires before the user changes it, an IAM administrator must reset it.
+- **MFA Device Limit & Activation:** AWS supports up to **8 MFA devices** per Root or IAM user simultaneously (recommended to register a backup MFA device to prevent account lockout). Virtual TOTP setup requires entering **2 consecutive 6-digit codes** to verify time synchronization.
+- **Multi-User MFA Devices:** Both **Virtual MFA apps** (Google Authenticator/Authy) and **U2F/FIDO2 Security Keys** (YubiKey) support multiple IAM/Root accounts on a single device, whereas traditional **Hardware Key Fobs** are bound 1-to-1 per user.
 
 ---
 
