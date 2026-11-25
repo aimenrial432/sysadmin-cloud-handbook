@@ -268,6 +268,8 @@ awslocal s3 rb s3://unauthorized-bucket
 - **Account Alias Limits:** Only **1 Account Alias** per AWS account; the alias name must be **globally unique** across all AWS accounts (lowercase letters, numbers, and hyphens only).
 - **Access Key Limits & Rotation:** Maximum **2 active Access Keys** per IAM user at any time to allow seamless key rotation. `SecretAccessKey` is shown **only once** upon creation; if lost, delete the key and generate a new one. Never commit `.env` or credential files to Git.
 - **Console Multi-Session Limit:** The AWS Management Console supports up to **5 active concurrent sessions** per browser.
+- **Recommended Alternatives to Long-Lived Access Keys (Exam Best Practice):** AWS recommends avoiding static Access Keys whenever possible: use **IAM Identity Center (SSO)** or **AWS CloudShell** for human CLI access, **IAM Roles** for workloads running inside AWS (EC2/Lambda), and **IAM Roles Anywhere** or OIDC federation for external workloads.
+- **Channel-Agnostic Permission Enforcement:** IAM policies apply identically across all access channels—revoking permissions from a user/group immediately blocks actions in the **Management Console, CLI, and SDK** alike.
 
 ### C. Password Policy & MFA
 - **Password Policy Scope & Limits:** Only **1** IAM Password Policy exists per AWS account (applies globally to all IAM users, never per group). Password reuse prevention can block up to the last **24** passwords. If a password expires before the user changes it, an IAM administrator must reset it.
