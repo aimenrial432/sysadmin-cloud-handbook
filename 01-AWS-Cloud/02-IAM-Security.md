@@ -61,7 +61,7 @@ date: "2026-11-24"
 - **Common Service Roles (Exam Focus):** Among all IAM role types (AWS Service, Cross-Account, Web Identity, SAML 2.0), **AWS Service Roles** are by far the most common in real-world architectures and the **SAA-C03 exam**—especially **EC2 Instance Roles** (attached via an *Instance Profile*), **Lambda Execution Roles**, and **CloudFormation Service Roles** (Exam rule: always assign an IAM Role to EC2/Lambda instead of embedding Access Keys).
 ### E. IAM Security & Auditing Tools
 - **IAM Credentials Report (Account-Level):** Generates a downloadable **CSV report** listing **all IAM users** in the account (including Root) along with the status, creation date, and last-used/rotation timestamps of their passwords, MFA devices, and Access Keys. Ideal for account-wide compliance audits (e.g., finding unrotated keys or users without MFA).
-- **IAM Access Advisor / Last Accessed (User/Entity-Level):** Displays all AWS services granted to a specific IAM user, group, role, or policy and the **timestamp when each service was last accessed**. Used to enforce the **Principle of Least Privilege** by identifying and revoking unused permissions.
+- **IAM Access Advisor / Last Accessed (User/Entity-Level):** Displays all AWS services granted to a specific IAM user, group, role, or policy, **which attached policy granted each permission**, and the **timestamp when each service was last accessed**. Used to enforce the **Principle of Least Privilege** by identifying and revoking unused permissions.
 
 ### IAM Policy JSON Structure (Sample)
 ```json
@@ -260,7 +260,24 @@ awslocal iam get-role --role-name DemoRoleForEC2
 awslocal iam list-attached-role-policies --role-name DemoRoleForEC2
 ```
 
-Note: When creating an EC2 role via the AWS Management Console, AWS automatically creates an Instance Profile with the same name (DemoRoleForEC2) to act as a container passing the role to the EC2 instance. Via CLI, if you attach it to an EC2 later, you also create the instance profile (create-instance-profile + add-role-to-instance-profile).
+**Note:** When creating an EC2 role via the AWS Management Console, AWS automatically creates an Instance Profile with the same name (DemoRoleForEC2) to act as a container passing the role to the EC2 instance. Via CLI, if you attach it to an EC2 later, you also create the instance profile (create-instance-profile + add-role-to-instance-profile).
+
+```powershell
+# 14. Generate IAM Credential Report & Query IAM Access Advisor (Last Accessed)
+# Step A: Trigger Credential Report generation (asynchronous job)
+awslocal iam generate-credential-report
+
+# Step B: Download the report (returns Base64-encoded CSV) and decode it to a local CSV file
+$reportB64 = awslocal iam get-credential-report --query 'Content' --output text
+[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($reportB64)) | Out-File -FilePath credential-report.csv -Encoding UTF8
+Get-Content credential-report.csv
+
+# Step C: Generate & retrieve IAM Access Advisor (Service Last Accessed Details) for a user
+$jobId = awslocal iam generate-service-last-accessed-details --arn arn:aws:iam::000000000000:user/aimenrial432 --query 'JobId' --output text
+awslocal iam get-service-last-accessed-details --job-id $jobId
+```
+
+**Note:** Both generate-credential-report and generate-service-last-accessed-details are asynchronous API calls (State: INPROGRESS $\rightarrow$ COMPLETE). In LocalStack Community, get-credential-report returns a valid Base64-encoded CSV with your simulated IAM users, whereas get-service-last-accessed-details returns the job structure without live historical usage telemetry.
 
 ### Mini-Lab: Least Privilege & Multi-Profile Testing (Admin vs. Read-Only)
 This lab simulates **Principle of Least Privilege** by creating a restricted `developers` group (`AmazonS3ReadOnlyAccess`) and switching between `aimenrial432` (Admin) and `dev-readonly` (Restricted) using named CLI profiles.
