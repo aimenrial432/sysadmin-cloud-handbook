@@ -30,6 +30,7 @@ date: "2026-11-24"
 - **User Access Methods & Credentials (3 Ways to Access AWS):**
   - **1. AWS Management Console (Web UI):** Authenticated via **Account ID/Alias + IAM Username + Password** (+ MFA). Managed via `create-login-profile`.
   - **2. AWS CLI (Command Line Interface):** Open-source tool (built on **Boto3**, the AWS SDK for Python) providing direct access to AWS public APIs from the terminal for scripting and automation. Authenticated via **Access Keys**.
+	  - **AWS CloudShell:** Browser-based shell pre-authenticated with your console credentials; includes 1 GB persistent storage per region, not available in all regions.
   - **3. AWS SDK (Software Development Kit):** Language-specific libraries (Python/Boto3, JS/Node.js, Java, Go, .NET, C++, Ruby, PHP) plus **Mobile (iOS/Android)** and **IoT Device SDKs**, embedded directly inside application source code to call AWS APIs programmatically. Authenticated via **Access Keys** (or IAM Roles).
   - **Access Keys Best Practices:** Treat `Access Key ID` $\approx$ *Username* and `Secret Access Key` $\approx$ *Password*. Never share keys with colleagues (each user generates their own); stored locally in `~/.aws/credentials` and `~/.aws/config`, safely outside Git repositories.
   - **Multi-Session Support (AWS Console):** Allows signing into up to **5 different IAM users or AWS accounts simultaneously** across tabs in the same browser without overwriting session cookies (useful for side-by-side permission testing across services like EC2 or S3).
