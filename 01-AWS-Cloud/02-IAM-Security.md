@@ -32,6 +32,17 @@ date: "2026-11-24"
   - **AWS Management Console (Web UI):** Authenticated via **Account ID/Alias + IAM Username + Password** (+ MFA). Managed via `create-login-profile`.
   - **Programmatic Access (CLI / SDK / Terraform):** Authenticated via **Access Key ID + Secret Access Key** (never meant to be memorized; automatically stored locally in `~/.aws/credentials` and `~/.aws/config`, safely outside project Git repositories).
   - **Multi-Session Support (AWS Console):** Allows signing into up to **5 different IAM users or AWS accounts simultaneously** across tabs in the same browser without overwriting session cookies (useful for side-by-side permission testing across services like EC2 or S3).
+- **Password Policy & MFA (User Account Security):**
+  - **1. IAM Password Policy (Account-Wide):** Enforces strong credentials across all IAM users in the account:
+    - Minimum password length & required character types (uppercase letters, lowercase letters, numbers, and non-alphanumeric symbols).
+    - Allow (or restrict) IAM users to change their own password.
+    - Password expiration: require users to rotate/change their password after a specific period (days).
+    - Prevent password reuse (remembers previous passwords).
+  - **2. Multi-Factor Authentication (MFA):** Protects accounts (especially the **Root Account** and privileged IAM users) by combining *something you know* (password) + *something you own* (security device). Even if a password is stolen or leaked, an attacker cannot sign in without the MFA token.
+    - **Virtual MFA Device:** Authenticator apps (e.g., Google Authenticator, Authy) — supports multiple tokens on a single mobile device.
+    - **Universal 2nd Factor (U2F) / FIDO2 Security Key:** Physical security keys (e.g., YubiKey) — supports multiple Root and IAM users on a single physical key.
+    - **Hardware Key Fob MFA Device:** Dedicated physical token generator (e.g., Gemalto; 1 device per user).
+    - **Hardware Key Fob MFA Device for AWS GovCloud (US):** Specialized physical MFA token exclusively for AWS GovCloud (US) government cloud accounts.
 - **IAM Tags (`Key: Value` Metadata):** Optional key-value pairs attached to IAM users or roles (e.g., `Department: Engineering`, `Environment: Prod`).
   - Used for organization, cost tracking, auditing, and **ABAC (Attribute-Based Access Control)**—granting dynamic access when a user's tag matches a resource's tag (`aws:PrincipalTag` vs. `aws:ResourceTag`).
 - **IAM Policies (JSON):** JSON documents attached to users, groups, or roles that explicitly define what actions are allowed or denied on specific AWS resources.
@@ -147,6 +158,20 @@ awslocal iam list-attached-user-policies --user-name aimenrial432
 awslocal iam detach-user-policy --user-name aimenrial432 --policy-arn arn:aws:iam::aws:policy/IAMReadOnlyAccess
 awslocal iam delete-group --group-name developers
 
+# 11. Configure, Inspect & Delete Account Password Policy
+awslocal iam update-account-password-policy `
+  --minimum-password-length 12 `
+  --require-symbols `
+  --require-numbers `
+  --require-uppercase-characters `
+  --require-lowercase-characters `
+  --allow-users-to-change-password `
+  --max-password-age 90 `
+  --password-reuse-prevention 5
+
+awslocal iam get-account-password-policy
+awslocal iam delete-account-password-policy
+
 ```
 
 ### Mini-Lab: Least Privilege & Multi-Profile Testing (Admin vs. Read-Only)
@@ -197,6 +222,8 @@ awslocal s3 rb s3://unauthorized-bucket
   - **Console Multi-Session Limit:** The AWS Management Console supports up to **5 active concurrent sessions** per browser.
   - **Cross-Group Conflict Resolution:** If a user belongs to multiple groups (`dev` + `marketing`) and one group grants `Allow` while the other enforces an `Explicit Deny` on the same action, **`Explicit Deny` always wins**.
   - **Managed vs. Inline Policy Lifecycle:** Customer Managed Policies exist independently in IAM and can be attached to multiple identities at once (supporting rollback via policy versions), whereas Inline Policies are bound 1-to-1 to a single identity and are permanently destroyed when that identity is deleted.
+  - **Password Policy Scope & Limits:** Only **1** IAM Password Policy exists per AWS account (applies globally to all IAM users, never per group). Password reuse prevention can block up to the last **24** passwords. If a password expires before the user changes it, an IAM administrator must reset it.
+  - **Multi-User MFA Devices:** Both **Virtual MFA apps** (Google Authenticator/Authy) and **U2F/FIDO2 Security Keys** (YubiKey) support multiple IAM/Root accounts on a single device, whereas traditional **Hardware Key Fobs** are bound 1-to-1 per user.
 
 ---
 
@@ -208,36 +235,7 @@ awslocal s3 rb s3://unauthorized-bucket
 | **Ideal Use Case** | Human admins / developers          | Role-based team permissions (Devs, Ops) | Allowing an EC2 instance to access S3 securely |
 
 
-Password policy:
 
-To secure users they are 2 options:
-
-	1-Define a password policy
-		-minimum password lenght
-		-rrequiere specific character types
-			-include uppercase letters
-			-lowercase letters
-			-numbers
-			-non alpha-numeric characters
-		-allow or not to a user to change their own passwords
-		-requiere to the user to change the password afetr a period of time
-		-Prevent password pre-use
-		
-	2-Multi Factor Authentication (MFA)
-		Users have access to your account and can possibly change configurations or delete resources in a AWS account (Specialy admins) 
-		Protect at least root account and IAM users
-		-MFA: Password you konw + security device you own
-			-If user lose the password (Forgotten or stoled) Hacker needs the token to enter to the account
-			MFA device options:
-				-Virtual MFA device (Google authenticator, Authy)
-					Support for multiple tokkens on a single device
-				-Universal 2nd Factor (2UF) Security key (Yubikey phisical device)
-					Support for multiple root and IAM users on a single security 
-					key
-				Hardware key Fob MFA Devide
-				Hardware Key Fob MFA Device fow AWS GovBloud (US)
-					Govermental cloud
-					
 
 
 
