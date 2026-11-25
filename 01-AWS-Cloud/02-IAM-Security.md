@@ -116,6 +116,12 @@ awslocal sts get-caller-identity --profile aimenrial432
 awslocal iam list-users
 awslocal iam get-group --group-name admin
 awslocal iam list-attached-group-policies --group-name admin
+
+# 9. Inspect AWS Managed Policies & View their JSON Definition (Built-in Policies)
+awslocal iam list-policies --scope AWS --query "Policies[?contains(PolicyName, 'S3')].[PolicyName, Arn]" --output table
+awslocal iam get-policy --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+awslocal iam get-policy-version --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess --version-id v1
+
 ```
 
 ### Mini-Lab: Least Privilege & Multi-Profile Testing (Admin vs. Read-Only)
