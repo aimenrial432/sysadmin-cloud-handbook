@@ -15,38 +15,39 @@ date: "2026-11-24"
 ---
 
 ## 2. Key Concepts & Architecture
+
+### A. Identities (Root, Users, Groups & Tags)
 - **Root Account:** Created by default when opening an AWS account. It **should never be used or shared** for daily tasks or applications—only for initial account setup and specific account-level tasks. Create individual IAM users instead.
-- **Account Alias & Sign-in URL:**
-  - By default, IAM users sign in to the AWS Web Console via a URL containing the **12-digit Account ID** (`https://<12-digit-account-id>.signin.aws.amazon.com/console`).
-  - An **Account Alias** replaces that 12-digit ID with a globally unique, friendly name (`https://<alias>.signin.aws.amazon.com/console`).
+  - **Account Alias & Sign-in URL:** By default, IAM users sign in to the AWS Web Console via a URL containing the **12-digit Account ID** (`https://<12-digit-account-id>.signin.aws.amazon.com/console`). An **Account Alias** replaces that 12-digit ID with a globally unique, friendly name (`https://<alias>.signin.aws.amazon.com/console`).
 - **Users:** Represent specific people or applications within your organization that need access to AWS.
-  - A user **does not have to belong** to any group.
-  - A user **can belong to multiple groups** simultaneously (inheriting the combined permissions of all those groups).
-  - **Policy Inheritance & Effective Permissions:** A user's effective permissions are the union (cumulative sum) of all policies attached to every group they belong to, plus any direct user policies.
-    - **AWS Managed Policies:** Pre-built, read-only policies created and maintained by AWS (e.g., `AdministratorAccess`, `IAMReadOnlyAccess`, `AmazonS3ReadOnlyAccess`).
-    - **Customer Managed Policies:** Custom standalone JSON policies created and maintained by you; reusable across multiple users, groups, or roles with version history (`v1`, `v2`, etc.).
-    - **Inline Policies:** Policies embedded directly into a single user, group, or role—strictly 1-to-1 (deleted automatically if the parent identity is deleted). Useful only for one-off exceptions; Managed Policies are preferred.
+  - A user **does not have to belong** to any group, and **can belong to multiple groups** simultaneously (inheriting the combined permissions of all those groups).
 - **Groups:** Collections of IAM users used to assign permissions in bulk.
   - **Key Rule:** Groups **can only contain users, never other groups** (no nested groups).
+- **IAM Tags (`Key: Value` Metadata):** Optional key-value pairs attached to IAM users or roles (e.g., `Department: Engineering`, `Environment: Prod`).
+  - Used for organization, cost tracking, auditing, and **ABAC (Attribute-Based Access Control)**—granting dynamic access when a user's tag matches a resource's tag (`aws:PrincipalTag` vs. `aws:ResourceTag`).
+
+### B. Authentication, Credentials & Account Security
 - **User Access Methods & Credentials:**
   - **AWS Management Console (Web UI):** Authenticated via **Account ID/Alias + IAM Username + Password** (+ MFA). Managed via `create-login-profile`.
   - **Programmatic Access (CLI / SDK / Terraform):** Authenticated via **Access Key ID + Secret Access Key** (never meant to be memorized; automatically stored locally in `~/.aws/credentials` and `~/.aws/config`, safely outside project Git repositories).
   - **Multi-Session Support (AWS Console):** Allows signing into up to **5 different IAM users or AWS accounts simultaneously** across tabs in the same browser without overwriting session cookies (useful for side-by-side permission testing across services like EC2 or S3).
-- **Password Policy & MFA (User Account Security):**
-  - **1. IAM Password Policy (Account-Wide):** Enforces strong credentials across all IAM users in the account:
-    - Minimum password length & required character types (uppercase letters, lowercase letters, numbers, and non-alphanumeric symbols).
-    - Allow (or restrict) IAM users to change their own password.
-    - Password expiration: require users to rotate/change their password after a specific period (days).
-    - Prevent password reuse (remembers previous passwords).
-  - **2. Multi-Factor Authentication (MFA):** Protects accounts (especially the **Root Account** and privileged IAM users) by combining *something you know* (password) + *something you own* (security device). Even if a password is stolen or leaked, an attacker cannot sign in without the MFA token.
-    - **Virtual MFA Device:** Authenticator apps (e.g., Google Authenticator, Authy) — supports multiple tokens on a single mobile device.
-    - **Universal 2nd Factor (U2F) / FIDO2 Security Key:** Physical security keys (e.g., YubiKey) — supports multiple Root and IAM users on a single physical key.
-    - **Hardware Key Fob MFA Device:** Dedicated physical token generator (e.g., Gemalto; 1 device per user).
-    - **Hardware Key Fob MFA Device for AWS GovCloud (US):** Specialized physical MFA token exclusively for AWS GovCloud (US) government cloud accounts.
-- **IAM Tags (`Key: Value` Metadata):** Optional key-value pairs attached to IAM users or roles (e.g., `Department: Engineering`, `Environment: Prod`).
-  - Used for organization, cost tracking, auditing, and **ABAC (Attribute-Based Access Control)**—granting dynamic access when a user's tag matches a resource's tag (`aws:PrincipalTag` vs. `aws:ResourceTag`).
-- **IAM Policies (JSON):** JSON documents attached to users, groups, or roles that explicitly define what actions are allowed or denied on specific AWS resources.
-  - **Least Privilege Principle:** Never grant more permissions than a user strictly needs to perform their job.
+- **IAM Password Policy (Account-Wide):** Enforces strong credentials across all IAM users in the account:
+  - Minimum password length & required character types (uppercase letters, lowercase letters, numbers, and non-alphanumeric symbols).
+  - Allow (or restrict) IAM users to change their own password.
+  - Password expiration: require users to rotate/change their password after a specific period (days).
+  - Prevent password reuse (remembers previous passwords).
+- **Multi-Factor Authentication (MFA):** Protects accounts (especially the **Root Account** and privileged IAM users) by combining *something you know* (password) + *something you own* (security device). Even if a password is stolen or leaked, an attacker cannot sign in without the MFA token.
+  - **Virtual MFA Device:** Authenticator apps (e.g., Google Authenticator, Authy) — supports multiple tokens on a single mobile device.
+  - **Universal 2nd Factor (U2F) / FIDO2 Security Key:** Physical security keys (e.g., YubiKey) — supports multiple Root and IAM users on a single physical key.
+  - **Hardware Key Fob MFA Device:** Dedicated physical token generator (e.g., Gemalto; 1 device per user).
+  - **Hardware Key Fob MFA Device for AWS GovCloud (US):** Specialized physical MFA token exclusively for AWS GovCloud (US) government cloud accounts.
+
+### C. Authorization & IAM Policies (JSON)
+- **Least Privilege Principle:** Never grant more permissions than a user strictly needs to perform their job.
+- **Policy Inheritance & Effective Permissions:** A user's effective permissions are the union (cumulative sum) of all policies attached to every group they belong to, plus any direct user policies.
+  - **AWS Managed Policies:** Pre-built, read-only policies created and maintained by AWS (e.g., `AdministratorAccess`, `IAMReadOnlyAccess`, `AmazonS3ReadOnlyAccess`).
+  - **Customer Managed Policies:** Custom standalone JSON policies created and maintained by you; reusable across multiple users, groups, or roles with version history (`v1`, `v2`, etc.).
+  - **Inline Policies:** Policies embedded directly into a single user, group, or role—strictly 1-to-1 (deleted automatically if the parent identity is deleted). Useful only for one-off exceptions; Managed Policies are preferred.
 
 ### IAM Policy JSON Structure (Sample)
 ```json
@@ -80,7 +81,6 @@ date: "2026-11-24"
 
 > **Cross-Platform Context (AWS vs. Windows / On-Premises):**
 > This JSON policy schema (`Version`, `Statement`, `Effect`, `Action`, `Resource`) is **specific to AWS IAM** (and AWS-compatible APIs like MinIO or LocalStack). In **Windows Server / Active Directory**, permissions are not defined via JSON files—instead, access is enforced through **NTFS/Share ACLs** (Access Control Lists) and **GPOs (Group Policy Objects)**, while modern container/cloud platforms like Kubernetes use **YAML-based RBAC**.
-
 ---
 
 ## 3. CLI Commands / LocalStack Lab
@@ -88,6 +88,7 @@ date: "2026-11-24"
 > **AWS Console Dashboard vs. LocalStack Environment Note:**
 > - **Permission Assignment:** Unlike the AWS Web Console wizard (which lets you tick managed policies during user creation), CLI/LocalStack workflows require creating the user/group first and explicitly attaching policies via ARN.
 > - **Console Sign-in & Alias:** In real AWS, IAM users log in through a dedicated web login portal using their Account ID/Alias, username, and password. LocalStack does **not** render an IAM web login form—its Resource Browser (`app.localstack.cloud`) connects directly to the local API (`localhost:4566`), so identity switching is performed via CLI profiles (`--profile` or `default`) while Account Aliases are managed via CLI. *(Note: LocalStack Community simulates IAM state; real permission blocking requires `ENFORCE_IAM=1` in Pro).*
+> - **MFA & Password Policy UI:** In the AWS Console, Password Policy is configured under *IAM -> Account settings* and Virtual MFA is paired visually by scanning a QR code during web sign-in. In LocalStack, both are managed exclusively via CLI (`update-account-password-policy` and `create-virtual-mfa-device`), and MFA prompts are not triggered because there is no web login portal.
 
 ```powershell
 # 1. Create IAM Group and User, then assign membership
