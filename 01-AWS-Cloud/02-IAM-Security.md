@@ -158,20 +158,36 @@ awslocal iam list-attached-user-policies --user-name aimenrial432
 awslocal iam detach-user-policy --user-name aimenrial432 --policy-arn arn:aws:iam::aws:policy/IAMReadOnlyAccess
 awslocal iam delete-group --group-name developers
 
-# 11. Configure, Inspect & Delete Account Password Policy
+# 11. Configure, Inspect & (Optionally) Delete Account Password Policy
+# Active lab policy (CIS/NIST recommended: 12+ chars, full complexity, no forced expiration)
 awslocal iam update-account-password-policy `
   --minimum-password-length 12 `
   --require-symbols `
   --require-numbers `
   --require-uppercase-characters `
   --require-lowercase-characters `
-  --allow-users-to-change-password `
-  --max-password-age 90 `
-  --password-reuse-prevention 5
+  --allow-users-to-change-password
 
+# Verify active policy
 awslocal iam get-account-password-policy
-awslocal iam delete-account-password-policy
 
+# Optional reset to AWS blank state (commented out to keep active policy in lab):
+# awslocal iam delete-account-password-policy
+```
+
+**Expected Output (`get-account-password-policy`):**
+```json
+{
+    "PasswordPolicy": {
+        "MinimumPasswordLength": 12,
+        "RequireSymbols": true,
+        "RequireNumbers": true,
+        "RequireUppercaseCharacters": true,
+        "RequireLowercaseCharacters": true,
+        "AllowUsersToChangePassword": true,
+        "ExpirePasswords": false
+    }
+}
 ```
 
 ### Mini-Lab: Least Privilege & Multi-Profile Testing (Admin vs. Read-Only)
