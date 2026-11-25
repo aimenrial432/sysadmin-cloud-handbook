@@ -51,9 +51,14 @@ date: "2026-11-24"
   - **AWS Managed Policies:** Pre-built, read-only policies created and maintained by AWS (e.g., `AdministratorAccess`, `IAMReadOnlyAccess`, `AmazonS3ReadOnlyAccess`).
   - **Customer Managed Policies:** Custom standalone JSON policies created and maintained by you; reusable across multiple users, groups, or roles with version history (`v1`, `v2`, etc.).
   - **Inline Policies:** Policies embedded directly into a single user, group, or role—strictly 1-to-1 (deleted automatically if the parent identity is deleted). Useful only for one-off exceptions; Managed Policies are preferred.
-  
 
-
+### D. IAM Roles (for AWS Services)
+- **Definition & Purpose:** An IAM identity with specific permissions intended to be assumed by **AWS services** (or trusted external entities) to perform actions on your behalf—never by physical end users.
+- **No Long-Term Credentials:** Unlike IAM Users, roles have **no passwords or static Access Keys**. Instead, they dynamically issue short-lived temporary security credentials via **AWS STS (`sts:AssumeRole`)**.
+- **Two-Part Structure:**
+  1. **Trust Policy (Resource-based):** Defines **who** is allowed to assume the role (`Principal`, e.g., `ec2.amazonaws.com` or `lambda.amazonaws.com`).
+  2. **Permissions Policy (Identity-based):** Defines **what** actions the assumed role is authorized to perform on AWS resources.
+- **Common Service Roles:** **EC2 Instance Roles** (attached via an *Instance Profile*), **Lambda Execution Roles**, and **CloudFormation Service Roles** (Exam rule: always assign an IAM Role to EC2/Lambda instead of embedding Access Keys).
 
 ### IAM Policy JSON Structure (Sample)
 ```json
@@ -220,7 +225,39 @@ awslocal iam list-mfa-devices --user-name aimenrial432
 awslocal iam deactivate-mfa-device --user-name aimenrial432 --serial-number arn:aws:iam::000000000000:mfa/MyPhoneMFA
 awslocal iam delete-virtual-mfa-device --serial-number arn:aws:iam::000000000000:mfa/MyPhoneMFA
 
+# 13. Create an IAM Role for an AWS Service (EC2)
+# 1. Create the Trust Policy JSON (UTF-8 without BOM) allowing EC2 to assume the role via STS
+@'
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+'@ | Set-Content -Path ec2-trust-policy.json -Encoding UTF8
+
+# 2. Create the IAM Role with the Trust Policy
+awslocal iam create-role `
+  --role-name DemoRoleForEC2 `
+  --assume-role-policy-document file://ec2-trust-policy.json
+
+# 3. Attach the Permissions Policy (IAMReadOnlyAccess)
+awslocal iam attach-role-policy `
+  --role-name DemoRoleForEC2 `
+  --policy-arn arn:aws:iam::aws:policy/IAMReadOnlyAccess
+
+# 4. Verify the role and its attached policies
+awslocal iam get-role --role-name DemoRoleForEC2
+awslocal iam list-attached-role-policies --role-name DemoRoleForEC2
 ```
+
+Note: When creating an EC2 role via the AWS Management Console, AWS automatically creates an Instance Profile with the same name (DemoRoleForEC2) to act as a container passing the role to the EC2 instance. Via CLI, if you attach it to an EC2 later, you also create the instance profile (create-instance-profile + add-role-to-instance-profile).
 
 ### Mini-Lab: Least Privilege & Multi-Profile Testing (Admin vs. Read-Only)
 This lab simulates **Principle of Least Privilege** by creating a restricted `developers` group (`AmazonS3ReadOnlyAccess`) and switching between `aimenrial432` (Admin) and `dev-readonly` (Restricted) using named CLI profiles.
