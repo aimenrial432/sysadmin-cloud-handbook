@@ -59,3 +59,17 @@ To ensure low latency and high availability, AWS organizes its physical infrastr
 - **Big Data Analytics:** Processing massive datasets at scale without managing physical clusters.
 - **Website Hosting, Mobile & Social Apps:** High-traffic backends with automatic elasticity.
 - **Gaming:** Entire multiplayer game servers and matchmaking backends running globally in the cloud.
+
+## Billing & Cost Management (Account Governance)
+
+* **IAM Access to Billing Information:**
+  * By default, IAM users (even those with `AdministratorAccess`) cannot access the **Billing and Cost Management** console.
+  * **Root Account Action Required:** The Root user must go to **Account Settings** and explicitly activate **IAM User and Role Access to Billing Information** before IAM permissions for billing take effect.
+* **AWS Budgets & Cost Alerts:**
+  * **Zero-Spend Budget:** Template that sends an email alert as soon as account spending exceeds `$0.01` (stepping outside the AWS Free Tier).
+  * **Monthly Cost Budget:** Sets a fixed monthly spending cap (e.g., `$10/month`) with alerts triggered by both **Actual** spend thresholds (e.g., `85%` and `100%`) and **Forecasted** spend (`100%` projected before month-end).
+* **Cost Debugging & Common Hidden Charges (`Bills`):**
+  * Reviewing monthly bills by Region and service helps identify forgotten resources generating charges:
+    * **NAT Gateways:** High hourly charges even with minimal traffic.
+    * **Unattached EBS Volumes:** Persistent storage disks left behind after terminating EC2 instances.
+    * **Unassociated Elastic IPs:** Public IPv4 addresses reserved but not attached to a running instance.
