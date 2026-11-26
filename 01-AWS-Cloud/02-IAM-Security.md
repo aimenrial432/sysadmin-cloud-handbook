@@ -62,6 +62,7 @@ date: "2026-11-24"
 ### E. IAM Security & Auditing Tools
 - **IAM Credentials Report (Account-Level):** Generates a downloadable **CSV report** listing **all IAM users** in the account (including Root) along with the status, creation date, and last-used/rotation timestamps of their passwords, MFA devices, and Access Keys. Ideal for account-wide compliance audits (e.g., finding unrotated keys or users without MFA).
 - **IAM Access Advisor / Last Accessed (User/Entity-Level):** Displays all AWS services granted to a specific IAM user, group, role, or policy, **which attached policy granted each permission**, and the **timestamp when each service was last accessed**. Used to enforce the **Principle of Least Privilege** by identifying and revoking unused permissions.
+- **Root Account vs. AdministratorAccess (Billing Guardrail):** Even with AdministratorAccess ("Action": "*", "Resource": "*"), IAM users cannot access the Billing and Cost Management console (aws-portal:*, ce:*) by default. The Root user must first sign in to the AWS Console and explicitly enable "IAM User and Role Access to Billing Information" under Account Settings (two-key governance lock; cannot be toggled via CLI/API) before IAM billing policies take effect.
 
 ### IAM Policy JSON Structure (Sample)
 ```json
@@ -275,6 +276,17 @@ Get-Content credential-report.csv
 # Step C: Generate & retrieve IAM Access Advisor (Service Last Accessed Details) for a user
 $jobId = awslocal iam generate-service-last-accessed-details --arn arn:aws:iam::000000000000:user/aimenrial432 --query 'JobId' --output text
 awslocal iam get-service-last-accessed-details --job-id $jobId
+
+# 15. Delegate Billing & Cost Management Access to an IAM Group (Post-Root Activation)
+# Prerequisite: Root user must manually enable "IAM User and Role Access to Billing Information" in AWS Console -> Account Settings.
+
+# Attach AWS Managed Billing Read-Only policy to the admin group
+awslocal iam attach-group-policy `
+  --group-name admin `
+  --policy-arn arn:aws:iam::aws:policy/AWSBillingReadOnlyAccess
+
+# Verify attached policies on the group
+awslocal iam list-attached-group-policies --group-name admin
 ```
 
 **Note:** Both generate-credential-report and generate-service-last-accessed-details are asynchronous API calls (State: INPROGRESS $\rightarrow$ COMPLETE). In LocalStack Community, get-credential-report returns a valid Base64-encoded CSV with your simulated IAM users, whereas get-service-last-accessed-details returns the job structure without live historical usage telemetry.
@@ -310,6 +322,10 @@ awslocal s3 rb s3://unauthorized-bucket
 
 > **Lab Takeaway (LocalStack Community vs. Real AWS):**
 > Even when `dev-readonly` signs requests via `--profile dev-readonly`, **LocalStack Community** logs the caller identity (`user/dev-readonly`) without blocking `s3:CreateBucket`. In **real AWS** (or LocalStack Pro with `ENFORCE_IAM=1`), step 4 fails with `An error occurred (AccessDenied) when calling the CreateBucket operation: Access Denied` because `AmazonS3ReadOnlyAccess` only grants `s3:Get*` and `s3:List*`.
+> 
+
+
+
 
 ---
 
